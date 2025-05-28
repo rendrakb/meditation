@@ -1,5 +1,4 @@
 import sys
-import time
 
 try:
     import tkinter as tk
@@ -26,6 +25,31 @@ class MeditationInterface:
         self.layout = LayoutManager(self)
         self.layout.init_layout()
 
+        self.start_button.config(command=self.start_timer)
+        self.stop_button.config(command=self.stop_timer)
+        self.pause_button.config(command=self.pause_timer)
+        self.timer_running = False
+
+    def start_timer(self):
+        self.timer_running = True
+        self.run_timer()
+
+    def stop_timer(self):
+        self.timer_running = False
+        self.progress_bar["value"] = 0
+
+    def pause_timer(self):
+        self.timer_running = False
+
+    def run_timer(self):
+        if self.timer_running:
+            current_time = int(float(self.time_slider.get()))
+            self.progress_bar["maximum"] = current_time * 60
+            self.progress_bar["value"] += 1
+
+            if self.progress_bar["value"] < self.progress_bar["maximum"]:
+                self.root.after(1000, self.run_timer)
+
 class LayoutManager:
     def __init__(self, interface: MeditationInterface):
         self.interface = interface
@@ -41,21 +65,21 @@ class LayoutManager:
         frame.pack(pady=2)
 
         self.interface.start_button = ttk.Button(frame, text="Start")
-        self.interface.stop_button = ttk.Button(frame, text="Stop")
         self.interface.pause_button = ttk.Button(frame, text="Pause")
+        self.interface.stop_button = ttk.Button(frame, text="Stop")
 
         self.interface.start_button.pack(side="left", padx=1)
-        self.interface.stop_button.pack(side="left", padx=1)
         self.interface.pause_button.pack(side="left", padx=1)
+        self.interface.stop_button.pack(side="left", padx=1)
 
     def _time_slider_frame(self):
         frame = ttk.Frame(self.root)
         frame.pack(pady=2)
 
-        self.interface.time_label = ttk.Label(frame, text="Time: 1 min")
+        self.interface.time_label = ttk.Label(frame, text="Time: 0 min")
         self.interface.time_label.pack(pady=2)
 
-        self.interface.time_slider = ttk.Scale(frame, from_=1, to=30, orient="horizontal", length=225, command=self._update_time_label)
+        self.interface.time_slider = ttk.Scale(frame, from_=0, to=30, orient="horizontal", length=225, command=self._update_time_label)
         self.interface.time_slider.pack(pady=2)
 
     def _update_time_label(self, value):
@@ -74,7 +98,7 @@ def run():
     root.title("Meditation")
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
-    root.geometry(f"300x125+{(screen_width - 300) // 2}+{(screen_height - 125) // 2}")
+    root.geometry(f"275x150+{(screen_width - 275) // 2}+{(screen_height - 150) // 2}")
 
     app = MeditationInterface(root)
 
