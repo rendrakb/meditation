@@ -10,14 +10,14 @@ except (ModuleNotFoundError, ImportError):
     )
     sys.exit(0)
 
-__version__ = "0.0.1"
-
 class MeditationInterface:
     start_button: ttk.Button
     stop_button: ttk.Button
     pause_button: ttk.Button
     time_slider: ttk.Scale
     progress_bar: ttk.Progressbar
+    breathing_bar: ttk.Progressbar
+    breathing_label: ttk.Label
 
     def __init__ (self, root: tk.Tk):
         self.root = root
@@ -31,12 +31,16 @@ class MeditationInterface:
         self.timer_running = False
 
     def start_timer(self):
-        self.timer_running = True
-        self.run_timer()
+        if not self.timer_running:
+            self.timer_running = True
+            self.run_timer()
+            self.run_breathing()
 
     def stop_timer(self):
         self.timer_running = False
         self.progress_bar["value"] = 0
+        self.breathing_bar["value"] = 0
+        self.breathing_label.config(text="Ready")
 
     def pause_timer(self):
         self.timer_running = False
@@ -50,6 +54,39 @@ class MeditationInterface:
             if self.progress_bar["value"] < self.progress_bar["maximum"]:
                 self.root.after(1000, self.run_timer)
 
+    def run_breathing(self):
+        if self.timer_running:
+            self.breathing_bar["value"] = 0
+            self.breathing_bar["maximum"] = 100
+            self.breathing_label.config(text="Inhale")
+
+            def update_progress(phase, duration):
+                steps = 100
+                interval = duration // steps
+                
+                def step_progress(value=0):
+                    if self.timer_running and value <= 100:
+                        self.breathing_bar["value"] = value
+                        self.root.after(interval, step_progress, value + 1)
+                    else:
+                        next_phase()
+                
+                step_progress()
+
+            def next_phase():
+                if self.timer_running:
+                    if self.breathing_label["text"] == "Inhale":
+                        self.breathing_label.config(text="Hold")
+                        update_progress("Hold", 4000)
+                    elif self.breathing_label["text"] == "Hold":
+                        self.breathing_label.config(text="Exhale")
+                        update_progress("Exhale", 8000)
+                    else:
+                        self.breathing_label.config(text="Inhale")
+                        self.root.after(1000, self.run_breathing)
+
+            update_progress("Inhale", 4000)
+
 class LayoutManager:
     def __init__(self, interface: MeditationInterface):
         self.interface = interface
@@ -59,10 +96,11 @@ class LayoutManager:
         self._buttons_frame()
         self._time_slider_frame()
         self._progress_bar_frame()
+        self._breathing_bar_frame()
 
     def _buttons_frame(self):
         frame = ttk.Frame(self.root)
-        frame.pack(pady=2)
+        frame.pack(pady=1)
 
         self.interface.start_button = ttk.Button(frame, text="Start")
         self.interface.pause_button = ttk.Button(frame, text="Pause")
@@ -74,7 +112,7 @@ class LayoutManager:
 
     def _time_slider_frame(self):
         frame = ttk.Frame(self.root)
-        frame.pack(pady=2)
+        frame.pack(pady=1)
 
         self.interface.time_label = ttk.Label(frame, text="Time: 0 min")
         self.interface.time_label.pack(pady=2)
@@ -87,18 +125,30 @@ class LayoutManager:
 
     def _progress_bar_frame(self):
         frame = ttk.Frame(self.root)
-        frame.pack(pady=2)
+        frame.pack(pady=1)
 
         self.interface.progress_bar = ttk.Progressbar(frame, orient="horizontal", length=225, mode="determinate")
         self.interface.progress_bar.pack(pady=2)
+
+    def _breathing_bar_frame(self):
+        frame = ttk.Frame(self.root)
+        frame.pack(pady=1)
+
+        self.interface.breathing_label = ttk.Label(frame, text="Ready")
+        self.interface.breathing_label.pack(pady=2)
+
+        self.interface.breathing_bar = ttk.Progressbar(frame, orient="horizontal", length=225, mode="determinate")
+        self.interface.breathing_bar.pack(pady=2)
 
 def run():
     root = tk.Tk()
 
     root.title("Meditation")
+    root.resizable(False, False)
+
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
-    root.geometry(f"275x150+{(screen_width - 275) // 2}+{(screen_height - 150) // 2}")
+    root.geometry(f"275x175+{(screen_width - 275) // 2}+{(screen_height - 175) // 2}")
 
     app = MeditationInterface(root)
 
