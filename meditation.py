@@ -44,6 +44,8 @@ class MeditationInterface:
 
     def pause_timer(self):
         self.timer_running = False
+        self.breathing_bar["value"] = 0
+        self.breathing_label.config(text="Ready")
 
     def run_timer(self):
         if self.timer_running:
@@ -83,7 +85,7 @@ class MeditationInterface:
                         update_progress("Exhale", 8000)
                     else:
                         self.breathing_label.config(text="Inhale")
-                        self.root.after(1000, self.run_breathing)
+                        self.root.after(0, self.run_breathing)
 
             update_progress("Inhale", 4000)
 
@@ -115,10 +117,10 @@ class LayoutManager:
         frame.pack(pady=1)
 
         self.interface.time_label = ttk.Label(frame, text="Time: 0 min")
-        self.interface.time_label.pack(pady=2)
+        self.interface.time_label.pack(pady=1)
 
         self.interface.time_slider = ttk.Scale(frame, from_=0, to=30, orient="horizontal", length=225, command=self._update_time_label)
-        self.interface.time_slider.pack(pady=2)
+        self.interface.time_slider.pack(pady=1)
 
     def _update_time_label(self, value):
         self.interface.time_label.config(text=f"Time: {int(float(value))} min")
@@ -128,23 +130,24 @@ class LayoutManager:
         frame.pack(pady=1)
 
         self.interface.progress_bar = ttk.Progressbar(frame, orient="horizontal", length=225, mode="determinate")
-        self.interface.progress_bar.pack(pady=2)
+        self.interface.progress_bar.pack(pady=1)
 
     def _breathing_bar_frame(self):
         frame = ttk.Frame(self.root)
         frame.pack(pady=1)
 
         self.interface.breathing_label = ttk.Label(frame, text="Ready")
-        self.interface.breathing_label.pack(pady=2)
+        self.interface.breathing_label.pack(pady=1)
 
         self.interface.breathing_bar = ttk.Progressbar(frame, orient="horizontal", length=225, mode="determinate")
-        self.interface.breathing_bar.pack(pady=2)
+        self.interface.breathing_bar.pack(pady=1)
 
 def run():
     root = tk.Tk()
 
     root.title("Meditation")
     root.resizable(False, False)
+    root.attributes("-topmost", True)
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
